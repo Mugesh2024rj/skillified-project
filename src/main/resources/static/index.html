@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo List</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; max-width: 700px; }
+        h1 { margin-bottom: 1rem; }
+        .controls { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        input { flex: 1; padding: 0.5rem; font-size: 1rem; }
+        button { padding: 0.55rem 0.9rem; font-size: 1rem; cursor: pointer; }
+        .todo-list { list-style: none; padding: 0; margin: 0; }
+        .todo-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0.8rem; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 0.5rem; }
+        .todo-item span { word-break: break-word; }
+        .todo-item button { background: #ff4d4f; color: white; border: none; border-radius: 4px; }
+        .empty { color: #666; }
+    </style>
+</head>
+<body>
+    <h1>Todo List</h1>
+    <div class="controls">
+        <input id="taskInput" type="text" placeholder="Enter a new task" />
+        <button id="addButton">Add</button>
+    </div>
+    <ul id="todoList" class="todo-list"></ul>
+
+    <script>
+        const storageKey = 'todoAppTasks';
+
+        function loadTodos() {
+            const stored = localStorage.getItem(storageKey);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function saveTodos(todos) {
+            localStorage.setItem(storageKey, JSON.stringify(todos));
+        }
+
+        function renderTodos() {
+            const todos = loadTodos();
+            const list = document.getElementById('todoList');
+            if (todos.length === 0) {
+                list.innerHTML = '<li class="empty">No tasks yet. Add one above.</li>';
+                return;
+            }
+            list.innerHTML = todos.map((todo, index) => `
+                <li class="todo-item">
+                    <span>${todo}</span>
+                    <button onclick="removeTodo(${index})">Remove</button>
+                </li>
+            `).join('');
+        }
+
+        function addTodo() {
+            const input = document.getElementById('taskInput');
+            const task = input.value.trim();
+            if (!task) return;
+            const todos = loadTodos();
+            todos.push(task);
+            saveTodos(todos);
+            input.value = '';
+            renderTodos();
+        }
+
+        function removeTodo(index) {
+            const todos = loadTodos();
+            todos.splice(index, 1);
+            saveTodos(todos);
+            renderTodos();
+        }
+
+        document.getElementById('addButton').addEventListener('click', addTodo);
+        document.getElementById('taskInput').addEventListener('keydown', event => {
+            if (event.key === 'Enter') addTodo();
+        });
+
+        window.removeTodo = removeTodo;
+        renderTodos();
+    </script>
+</body>
+</html>

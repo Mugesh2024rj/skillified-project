@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo List Web App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; }
+        .todo-list { list-style: none; padding: 0; }
+        .todo-item { display: flex; justify-content: space-between; margin: 0.5rem 0; }
+        button { cursor: pointer; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Todo List Web App</h1>
+    <div>
+        <input id="taskInput" type="text" placeholder="Enter a new task" />
+        <button id="addButton">Add Task</button>
+    </div>
+    <p class="error" id="errorMessage"></p>
+    <ul id="todoList" class="todo-list"></ul>
+
+    <script>
+        const apiUrl = '/api/todos';
+        const list = document.getElementById('todoList');
+        const errorMessage = document.getElementById('errorMessage');
+
+        async function loadTodos() {
+            errorMessage.textContent = '';
+            const response = await fetch(apiUrl);
+            const todos = await response.json();
+            list.innerHTML = todos.map(todo => `
+                <li class="todo-item">
+                    <span>${todo.text}</span>
+                    <button onclick="removeTodo(${todo.id})">Remove</button>
+                </li>
+            `).join('');
+        }
+
+        async function addTodo() {
+            const input = document.getElementById('taskInput');
+            const taskText = input.value.trim();
+            if (!taskText) {
+                errorMessage.textContent = 'Task cannot be empty.';
+                return;
+            }
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: taskText })
+            });
+            if (!response.ok) {
+                const message = await response.text();
+                errorMessage.textContent = message || 'Unable to add task.';
+                return;
+            }
+            input.value = '';
+            loadTodos();
+        }
+
+        async function removeTodo(id) {
+            const response = await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+            if (!response.ok) {
+                errorMessage.textContent = 'Unable to remove the task.';
+                return;
+            }
+            loadTodos();
+        }
+
+        document.getElementById('addButton').addEventListener('click', addTodo);
+        document.getElementById('taskInput').addEventListener('keydown', event => {
+            if (event.key === 'Enter') addTodo();
+        });
+        loadTodos();
+    </script>
+</body>
+</html>
